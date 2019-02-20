@@ -1,19 +1,20 @@
 all: compile
 
-compile: deps
-	./compile.sh
+compile: 
+	# I don't know what to do
 
-deps:
-	./install_deps.sh
-	touch deps
 
-test: compile
-	./run_tests.sh
+# deps:
+# 	./install_deps.sh
+# 	touch deps
 
-clean:
-	rm -rf classes
+# test: compile
+# 	./run_tests.sh
 
-reallyclean: clean
-	rm -rf lib deps
+# clean:
+# 	rm -rf classes
 
-.PHONY: all compile test clean reallyclean
+# reallyclean: clean
+# 	rm -rf lib deps
+
+# .PHONY: all compile test clean reallyclean

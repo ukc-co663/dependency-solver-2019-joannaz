@@ -1,2 +1,3 @@
-# depsolver-StartJava
-Scaffolding for Java projects
+# Depsolver
+
+Depsolver in C#
