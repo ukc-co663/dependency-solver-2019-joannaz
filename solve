@@ -1,0 +1,1 @@
+dotnet run --project DepSolver/DepSolver/DepSolver.csproj -- $1 $2 $3

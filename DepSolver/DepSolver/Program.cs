@@ -25,10 +25,12 @@ namespace DepSolver
             }
             else
             {
-                    var basePath = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
-                    repoPath = Path.Combine(basePath, "tests\\example-0\\repository.json");
-                    initialPath = Path.Combine(basePath, "tests\\example-0\\initial.json");
-                    constraintsPath = Path.Combine(basePath, "tests\\example-0\\constraints.json");
+                
+                //var basePath = Directory.GetCurrentDirectory(); // Ubuntu base path
+                var basePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\..\\")); // For VS Studio
+                repoPath = Path.Combine(basePath, "tests/example-0/repository.json");
+                initialPath = Path.Combine(basePath, "tests/example-0/initial.json");
+                constraintsPath = Path.Combine(basePath, "tests/example-0/constraints.json");
             }
 
             
