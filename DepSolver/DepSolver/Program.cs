@@ -25,13 +25,13 @@ namespace DepSolver
             }
             else
             {
-                    var basePath = Directory.GetParent(Environment.CurrentDirectory).Parent.FullName;
+                    var basePath = Directory.GetParent(Environment.CurrentDirectory).Parent.Parent.FullName;
                     repoPath = Path.Combine(basePath, "tests\\example-0\\repository.json");
                     initialPath = Path.Combine(basePath, "tests\\example-0\\initial.json");
                     constraintsPath = Path.Combine(basePath, "tests\\example-0\\constraints.json");
             }
 
-
+            
             List<Package> repo = JsonConvert.DeserializeObject<List<Package>>(File.ReadAllText(repoPath));
             List<string> initial = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(initialPath));
             List<string> constraints = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(constraintsPath));
