@@ -10,9 +10,12 @@ namespace DepSolver
 {
     class Program
     {
+        private static Repository repo;
+        private static List<string> initial;
+
+
         static void Main(string[] args)
         {
-
             string repoPath;
             string initialPath;
             string constraintsPath;
@@ -25,7 +28,6 @@ namespace DepSolver
             }
             else
             {
-                
                 //var basePath = Directory.GetCurrentDirectory(); // Ubuntu base path
                 var basePath = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..\\..\\..\\..\\..\\")); // For VS Studio
                 repoPath = Path.Combine(basePath, "tests/example-0/repository.json");
@@ -33,28 +35,44 @@ namespace DepSolver
                 constraintsPath = Path.Combine(basePath, "tests/example-0/constraints.json");
             }
 
-            
-            List<Package> repo = JsonConvert.DeserializeObject<List<Package>>(File.ReadAllText(repoPath));
-            List<string> initial = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(initialPath));
-            List<string> constraints = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(constraintsPath));
+            repo = new Repository(JsonConvert.DeserializeObject<List<Package>>(File.ReadAllText(repoPath)));
+            initial = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(initialPath));
+            var toInstall = JsonConvert.DeserializeObject<List<string>>(File.ReadAllText(constraintsPath));
 
-            repo.ForEach(x =>
+            var x = Solve(toInstall, new List<string>());
+            var installedPack = new List<string>();
+        }
+
+        public static List<string> Solve(List<string> toInstall, List<string> install)
+        {
+            toInstall.ForEach(con =>
             {
-                Console.Write("Name: ");
-                Console.Write(x.Name);
-                Console.Write(" Version: ");
-                Console.Write(x.Version);
-                Console.Write(" Size: ");
-                Console.WriteLine(x.Size);
-
-                x.Depends.ForEach(dep =>
+                var name = con.Substring(0, 1);
+                var op = con.Substring(1, con.Length - 1);
+                // Get the thing to install / uninstall
+                if (op.Equals("+"))
                 {
-                    Console.Write("  Dependencies: ");
-                    dep.ForEach(Console.Write);
-                    Console.WriteLine();
-                });
+                    // Find the package in the repo
+                    if (repo.Packages.TryGetValue(name, out var packToInstall))
+                    {
+                        // Init conflict list??
+                        List<string> conflicts = new List<string>();
+                        // If there is only one repo:
+                        if (packToInstall.Count == 1)
+                        {
+                            // 
+                            packToInstall[0].Depends.ForEach(x =>
+                            {
+                                // Traverse down and recurse?
+                            });
+                        }
+                    }
+                }
+
             });
 
+            return new List<string>();
         }
+
     }
 }
