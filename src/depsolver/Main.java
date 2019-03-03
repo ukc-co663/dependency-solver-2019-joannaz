@@ -7,52 +7,54 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.HashMap;
 
-class Package {
-  private String name;
-  private String version;
-  private Integer size;
-  private List<List<String>> depends = new ArrayList<>();
-  private List<String> conflicts = new ArrayList<>();
-
-  public String getName() { return name; }
-  public String getVersion() { return version; }
-  public Integer getSize() { return size; }
-  public List<List<String>> getDepends() { return depends; }
-  public List<String> getConflicts() { return conflicts; }
-  public void setName(String name) { this.name = name; }
-  public void setVersion(String version) { this.version = version; }
-  public void setSize(Integer size) { this.size = size; }
-  public void setDepends(List<List<String>> depends) { this.depends = depends; }
-  public void setConflicts(List<String> conflicts) { this.conflicts = conflicts; }
-}
+import depsolver.Package;
 
 public class Main {
-  public static void main(String[] args) throws IOException {
-    TypeReference<List<Package>> repoType = new TypeReference<List<Package>>() {};
-    List<Package> repo = JSON.parseObject(readFile(args[0]), repoType);
-    TypeReference<List<String>> strListType = new TypeReference<List<String>>() {};
-    List<String> initial = JSON.parseObject(readFile(args[1]), strListType);
-    List<String> constraints = JSON.parseObject(readFile(args[2]), strListType);
 
-    // CHANGE CODE BELOW:
-    // using repo, initial and constraints, compute a solution and print the answer
-    for (Package p : repo) {
-      System.out.printf("package %s version %s\n", p.getName(), p.getVersion());
-      for (List<String> clause : p.getDepends()) {
-        System.out.printf("  dep:");
-        for (String q : clause) {
-          System.out.printf(" %s", q);
-        }
-        System.out.printf("\n");
-      }
-    }
-  }
+	static List<Package> repo;
+	static List<String> initial;
+	static List<String> toInstall;
+	static Repository realRepo;
 
-  static String readFile(String filename) throws IOException {
-    BufferedReader br = new BufferedReader(new FileReader(filename));
-    StringBuilder sb = new StringBuilder();
-    br.lines().forEach(line -> sb.append(line));
-    return sb.toString();
-  }
+	public static void main(String[] args) throws IOException {
+
+		String repoPath = null;
+		String initialPath =  null;
+		String constraintsPath = null;
+
+		if(args.length == 0) {
+			repoPath = "tests/example-0/repository.json";
+			initialPath = "tests/example-0/initial.json";
+			constraintsPath = "tests/example-0/constraints.json";
+		} else {
+			repoPath = args[0];
+			initialPath = args[1];
+			constraintsPath = args[2];
+		}
+
+		TypeReference<List<String>> strListType = new TypeReference<List<String>>() {};
+		TypeReference<List<Package>> repoType = new TypeReference<List<Package>>() {};
+		// Repo
+		repo = JSON.parseObject(readFile(repoPath), repoType);
+		realRepo = new Repository(repo);
+		// Initial state
+		initial = JSON.parseObject(readFile(initialPath), strListType);
+		// What I need to install
+		toInstall = JSON.parseObject(readFile(constraintsPath), strListType);    
+
+		realRepo.calculateDeps(repo);
+		realRepo.calculateConflicts(repo);
+		
+		
+		
+	}
+
+	static String readFile(String filename) throws IOException {
+		BufferedReader br = new BufferedReader(new FileReader(filename));
+		StringBuilder sb = new StringBuilder();
+		br.lines().forEach(line -> sb.append(line));
+		return sb.toString();
+	}
 }
