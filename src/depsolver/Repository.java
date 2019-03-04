@@ -23,7 +23,6 @@ public class Repository {
 				name.put(p.getVersion(), p);
 			}
 		}
-
 	}
 
 	/**
@@ -34,14 +33,15 @@ public class Repository {
 		for(Package p : packages) {
 			// The dependencies of the package
 			List<List<String>> dependencies = p.getDepends();
-			List<List<String>> ands = new ArrayList<>();
 
 			// The x AND y
+			List<List<String>> ands = new ArrayList<>();
 			for(List<String> and : dependencies) {
+
 				// the a or b
+				ArrayList<String> orsList = new ArrayList<String>();
 				for(String or : and) {
-					//					System.out.println(or);
-					ArrayList<String> orsList = new ArrayList<String>();
+
 					String[] ors = or.split("[<>=]+");
 					//ors[0] = B
 					//ors[1] = 3.1
@@ -53,11 +53,10 @@ public class Repository {
 						HashMap<String, Package> versions = repo.get(ors[0]);
 
 						for(String version : versions.keySet()) {
-							if(Util.compareVersion(ors[1], version) <= 0) {
+							if(Util.compareVersion(version, ors[1]) <= 0) {
 								orsList.add(ors[0] + "=" + version);
 							}
 						}
-
 					} 
 
 					/****************************************
@@ -67,7 +66,7 @@ public class Repository {
 						HashMap<String, Package> versions = repo.get(ors[0]);
 
 						for(String version : versions.keySet()) {
-							if(Util.compareVersion(ors[1], version) >= 0) {
+							if(Util.compareVersion(version, ors[1]) >= 0) {
 								orsList.add(ors[0] + "=" + version);
 							}
 						}
@@ -80,7 +79,7 @@ public class Repository {
 						HashMap<String, Package> versions = repo.get(ors[0]);
 
 						for(String version : versions.keySet()) {
-							if(Util.compareVersion(ors[1], version) < 0) {
+							if(Util.compareVersion(version, ors[1]) < 0) {
 								orsList.add(ors[0] + "=" + version);
 							}
 						}
@@ -93,7 +92,7 @@ public class Repository {
 						HashMap<String, Package> versions = repo.get(ors[0]);
 
 						for(String version : versions.keySet()) {
-							if(Util.compareVersion(ors[1], version) > 0) {
+							if(Util.compareVersion(version, ors[1]) > 0) {
 								orsList.add(ors[0] + "=" + version);
 							}
 						}
@@ -105,7 +104,7 @@ public class Repository {
 						HashMap<String, Package> versions = repo.get(ors[0]);
 
 						for(String version : versions.keySet()) {
-							if(Util.compareVersion(ors[1], version) == 0) {
+							if(Util.compareVersion(version, ors[1]) == 0) {
 								orsList.add(ors[0] + "=" + version);
 							}
 						}
@@ -120,11 +119,12 @@ public class Repository {
 
 						// get any
 					}
-					ands.add(orsList);
 				}
-				//								System.out.println(ands);
+				ands.add(orsList);
+
+				repo.get(p.getName()).get(p.getVersion()).setDepends(ands);
 			}
-			repo.get(p.getName()).get(p.getVersion()).setDepends(ands);
+
 
 
 		}
@@ -231,4 +231,54 @@ public class Repository {
 		}
 
 	}
+
+	public Package getSpecific(String id) {
+		String[] x = id.split("=");
+		return repo.get(x[0]).get(x[1]);
+	}
+
+	public List<Package> getPackages(String id){
+		ArrayList<Package> returnPackages = new ArrayList<>();
+		String[] v = id.split("[<>=]+");
+		HashMap<String,Package> packages = repo.get(v[0]);
+		if(packages != null) {
+			if(id.contains("<=")) {
+				for(String ver : packages.keySet()) {				
+					if(Util.compareVersion(ver, v[1]) <= 0) {
+						returnPackages.add(packages.get(ver));
+					}
+
+				}
+			}
+			else if(id.contains("<")) {
+				for(String ver : packages.keySet()) {
+					if(Util.compareVersion(ver, v[1]) < 0) {
+						returnPackages.add(packages.get(ver));
+					}
+				}
+
+			} 
+			else if(id.contains(">")) {
+				for(String ver : packages.keySet()) {
+					if(Util.compareVersion(ver, v[1]) > 0) {
+						returnPackages.add(packages.get(ver));
+					}
+				}
+			}
+			else if(id.contains(">=")) {
+				for(String ver : packages.keySet()) {
+					if(Util.compareVersion(ver, v[1]) >= 0) {
+						returnPackages.add(packages.get(ver));
+					}
+				}
+			} else {
+				for(String ver : packages.keySet()) {
+					returnPackages.add(packages.get(ver));
+				}
+			}
+
+		}
+		return returnPackages;
+	}
+
 }

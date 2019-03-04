@@ -1,13 +1,8 @@
 package depsolver;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Lists;
 
 public class Package{
 	private String name;
@@ -27,4 +22,20 @@ public class Package{
 	public void setDepends(List<List<String>> depends) { this.depends = depends; }
 	public void setConflicts(List<String> conflicts) { this.conflicts = conflicts; }
 
+	public String toString() {
+	return name + "=" + version;
+	}
+	
+	public String toCNFString() {
+		String x = name + version;
+		if(conflicts.size() > 0) {
+			for(String s : conflicts) {
+				x += "&";
+				String[] var = s.split("[<>=]+");
+				x += ("~" + "(" + var[0]+var[1] + ")");
+			}
+		}
+		
+		return x;
+	}
 }

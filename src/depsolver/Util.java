@@ -1,8 +1,15 @@
 package depsolver;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import com.google.common.collect.BiMap;
+import com.google.common.collect.HashBiMap;
 
 public class Util {
+
+	static BiMap<String,String> dict = HashBiMap.create();
+
 
 	/**
 	 * Lexicographically compare versions
@@ -60,10 +67,61 @@ public class Util {
 		return returnVal;
 	}
 
-	public static int solve() {
-		
-		
-		return 1;
+	public static String getCNF(List<String> toInstall, Repository repo) {
+		String CNF = "";
+		for(String packageToDo : toInstall) {
+			String packageToDoName = packageToDo.substring(1);
+			String packageOperator = packageToDo.substring(0, packageToDo.length() -1).trim();
+			// Install
+			if(packageOperator.equals("+")) {
+				// List of packs to install
+				List<Package> packsToInstall = new ArrayList<Package>();
+				// If it just wants a single one
+				if(packageToDo.contains("=")) {
+					// Just get the specific one
+					Package packToInstall = repo.getSpecific(packageToDoName);
+					packsToInstall.add(packToInstall);
+				} else {
+					// It either wants any pack, or ones that are greater, smaller etc. 
+					List<Package> multiplePacks = repo.getPackages(packageToDoName);
+					packsToInstall.addAll(multiplePacks);
+				}
+				
+				for(Package p : packsToInstall) {
+					String currPackCNF = "";
+					currPackCNF+=p.toString();
+					List<List<String>> dependenciesForPackage = p.getDepends();
+					if(dependenciesForPackage.size() > 0) {
+						for(List<String> deps : dependenciesForPackage) {
+							
+							
+						}
+						currPackCNF += calcDep(dependenciesForPackage, repo);
+					}
+					
+					CNF += currPackCNF;
+				}
+			}
+		}
+		return CNF;
 	}
 	
+	static String calcDep(List<List<String>> identifier, Repository repo) {
+		//TODO: IMPLEMENT
+		return "";
+	}
+	
+
+	static String depCalcHell(String identifier, Repository repo) {
+		ArrayList<ArrayList<String>> deps = new ArrayList<ArrayList<String>>();
+		Package pack = repo.getSpecific(identifier);
+		
+		for(List<String> dependences : pack.getDepends()) {
+			System.out.println(dependences);
+		}
+		
+		return "";
+
+	}
+
 }
