@@ -86,42 +86,49 @@ public class Util {
 					List<Package> multiplePacks = repo.getPackages(packageToDoName);
 					packsToInstall.addAll(multiplePacks);
 				}
-				
+
 				for(Package p : packsToInstall) {
 					String currPackCNF = "";
 					currPackCNF+=p.toString();
-					List<List<String>> dependenciesForPackage = p.getDepends();
-					if(dependenciesForPackage.size() > 0) {
-						for(List<String> deps : dependenciesForPackage) {
-							
-							
-						}
-						currPackCNF += calcDep(dependenciesForPackage, repo);
-					}
-					
+					currPackCNF += calcDep(p.toString(), repo);
+
 					CNF += currPackCNF;
 				}
 			}
 		}
 		return CNF;
 	}
-	
-	static String calcDep(List<List<String>> identifier, Repository repo) {
-		//TODO: IMPLEMENT
-		return "";
-	}
-	
 
-	static String depCalcHell(String identifier, Repository repo) {
-		ArrayList<ArrayList<String>> deps = new ArrayList<ArrayList<String>>();
-		Package pack = repo.getSpecific(identifier);
+	static ArrayList<ArrayList<Constraint>> calcDep(String id, Repository repo) {
+		ArrayList<ArrayList<Constraint>> comb = new ArrayList<ArrayList<Constraint>>();
+		Package p = repo.getSpecific(id);
+
+		List<List<String>> deps = p.getDepends();
+
+		// Base case, no dependencies
+		ArrayList<Constraint> singleComb = new ArrayList<>();			
+		singleComb.add(new Constraint(Op.POS, id));
+		comb.add(singleComb);
 		
-		for(List<String> dependences : pack.getDepends()) {
-			System.out.println(dependences);
+		// Some dependencies
+		for(List<String> and : deps) {
+			
+			ArrayList<ArrayList<Constraint>> temp = new ArrayList<>();
+			
+			for(String or : and) {				
+				ArrayList<ArrayList<Constraint>> dependencies = calcDep(or, repo);
+					for(ArrayList<Constraint> combination : dependencies) {
+						
+						for(ArrayList<Constraint> r : comb) {
+							ArrayList<Constraint> clone = (ArrayList<Constraint>) r.clone();
+							clone.addAll(combination);
+							temp.add(clone);
+						}
+						
+					}
+			}
+			comb = temp;
 		}
-		
-		return "";
-
+		return comb;
 	}
-
 }

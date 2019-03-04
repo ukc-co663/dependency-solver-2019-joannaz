@@ -33,9 +33,9 @@ public class Main {
 		String constraintsPath 	= 	null;
 
 		if(args.length == 0) {
-			repoPath = "tests/example-0/repository.json";
-			initialPath = "tests/example-0/initial.json";
-			constraintsPath = "tests/example-0/constraints.json";
+			repoPath = "tests/seen-7/repository.json";
+			initialPath = "tests/seen-7/initial.json";
+			constraintsPath = "tests/seen-7/constraints.json";
 		} else {
 			repoPath 		= args[0];
 			initialPath 	= args[1];
@@ -56,7 +56,7 @@ public class Main {
 		realRepo.calculateDeps(repo);
 		realRepo.calculateConflicts(repo);
 
-		//testCode();
+		testCode();
 
 		String cnf = Util.getCNF(toInstall, realRepo);
 
@@ -71,19 +71,19 @@ public class Main {
 
 	static void testCode() {
 		System.out.println("------------------------ TEST STUFF ---------------------");
-		for(String s : Repository.repo.get("B").get("3.2").getConflicts()) {
-			System.out.println(s);
-		}
+//		System.out.println("Get all conflicts of B=3.2");
+//		
+//		System.out.println(Repository.repo.get("B").get("3.2").getConflicts());		
+//		
+//		System.out.println("Get all dependencies of D=10.3.1");
+//		for(List<String> x : Repository.repo.get("D").get("10.3.1").getDepends()) {
+//			System.out.println(x);
+//		}
+		//System.out.println(Repository.repo.get("D").get("10.3.1").toCNFString());
 		
-		for(List<String> x : Repository.repo.get("D").get("10.3.1").getDepends()) {
-			System.out.println(x);
-			for(String y : x) {
-				System.out.println(y);
-			}
-
-		}
-		System.out.println(Repository.repo.get("D").get("10.3.1").toCNFString());
+		System.out.println("------------------------ CNF STUFF ---------------------");
 		
+		System.out.println(Util.calcDep("Y23=1", realRepo));
 		
 			
 		System.out.println("---------------------------------------------------------");
