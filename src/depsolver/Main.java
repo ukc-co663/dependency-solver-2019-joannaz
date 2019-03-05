@@ -85,8 +85,12 @@ public class Main {
 		
 		ArrayList<ArrayList<Constraint>> dependencies = Util.calcDep("A=2.01", realRepo);
 		ArrayList<ArrayList<Constraint>> depsAndCons = Util.calcConflicts(dependencies, realRepo);
+		ArrayList<String> solutions = Util.calculateFormula(depsAndCons);
+		ArrayList<String> validSolutions = Util.SATSolve(solutions);
+		ArrayList<ArrayList<String>> nf = Util.convertBack(validSolutions);
+		ArrayList<String> smallestSol = Util.getSmallestWeight(nf, realRepo);
 		
-		System.out.println(depsAndCons);
+		System.out.println(smallestSol);
 		
 			
 		System.out.println("---------------------------------------------------------");
