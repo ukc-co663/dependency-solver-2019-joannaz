@@ -233,11 +233,14 @@ public class Repository {
 	}
 
 	public Package getSpecific(String id) {
+		if(id.contains("+")) {
+			id = id.replace("+", "");
+		}
 		String[] x = id.split("=");
 		return repo.get(x[0]).get(x[1]);
 	}
 
-	public List<Package> getPackages(String id){
+	public ArrayList<Package> getPackages(String id){
 		ArrayList<Package> returnPackages = new ArrayList<>();
 		String[] v = id.split("[<>=]+");
 		HashMap<String,Package> packages = repo.get(v[0]);

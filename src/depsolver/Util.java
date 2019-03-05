@@ -1,9 +1,13 @@
 package depsolver;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 
+import org.jgrapht.graph.DefaultDirectedGraph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.traverse.TopologicalOrderIterator;
 import org.logicng.datastructures.Tristate;
 import org.logicng.formulas.Formula;
 import org.logicng.formulas.FormulaFactory;
@@ -12,6 +16,7 @@ import org.logicng.io.parsers.PropositionalParser;
 import org.logicng.solvers.MiniSat;
 import org.logicng.solvers.SATSolver;
 
+import com.alibaba.fastjson.JSON;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 
@@ -73,35 +78,36 @@ public class Util {
 		return returnVal;
 	}
 
-	public static String getCNF(List<String> toInstall, Repository repo) {
-		String CNF = "";
+	public static void solve(List<String> toInstall, Repository repo) {
 		for(String packageToDo : toInstall) {
+			ArrayList<ArrayList<String>> solutions = new ArrayList<ArrayList<String>>();
 			String packageToDoName = packageToDo.substring(1);
 			String packageOperator = packageToDo.substring(0, packageToDo.length() -1).trim();
 			// Install
 			if(packageOperator.equals("+")) {
-				// List of packs to install
-				List<Package> packsToInstall = new ArrayList<Package>();
-				// If it just wants a single one
-				if(packageToDo.contains("=")) {
-					// Just get the specific one
-					Package packToInstall = repo.getSpecific(packageToDoName);
-					packsToInstall.add(packToInstall);
-				} else {
-					// It either wants any pack, or ones that are greater, smaller etc. 
-					List<Package> multiplePacks = repo.getPackages(packageToDoName);
-					packsToInstall.addAll(multiplePacks);
-				}
-
-				for(Package p : packsToInstall) {
-					String currPackCNF = "";
-					currPackCNF+=p.toString();
-					ArrayList<ArrayList<Constraint>> formulaList = calc(p.toString(), repo);
-					CNF += currPackCNF;
-				}
+				// List of packs to install			
+				solveMain(packageToDoName, repo);
 			}
 		}
-		return CNF;
+	}
+	
+	static void solveMain(String p, Repository repo) {
+		ArrayList<ArrayList<String>> allSolutions = new ArrayList<ArrayList<String>>();
+		ArrayList<Package> allPackages = repo.getPackages(p);
+		for(Package pack : allPackages) {
+			ArrayList<ArrayList<Constraint>> dependencies = calc(pack.toString(), repo);
+			ArrayList<ArrayList<Constraint>> depsAndCons = calcConflicts(dependencies, repo);
+			ArrayList<String> solutions = calculateFormula(depsAndCons);
+			ArrayList<String> validSolutions = SATSolve(solutions);
+			ArrayList<ArrayList<String>> nf = convertBack(validSolutions);
+			ArrayList<String> smallestSol = getSmallestWeight(nf, repo);
+			ArrayList<String> sortedGraph = reorderDependencies(smallestSol, repo);
+			allSolutions.add(sortedGraph);
+		}
+		
+		ArrayList<String> smallestSol = getSmallestWeight(allSolutions, repo);
+		
+		prettyPrintSolution(smallestSol);
 	}
 
 	/**
@@ -288,10 +294,6 @@ public class Util {
 	 */
 	static ArrayList<String> getSmallestWeight(ArrayList<ArrayList<String>> validSolutions, Repository repo) {
 		
-		if(validSolutions.size() == 1) {
-			return validSolutions.get(0);
-		}
-		
 		int bestWeight = Integer.MAX_VALUE;
 		ArrayList<String> bestSolution = new ArrayList<String>();
 
@@ -306,21 +308,45 @@ public class Util {
 				bestSolution = solution;
 			}
 		}
-
 		return bestSolution;
 	}
 
 	static ArrayList<String> reorderDependencies(ArrayList<String> solution, Repository repo){
-		ArrayList<String> orderedSolution = new ArrayList<>();
+		// solution = [A=2.01, C=1, D=10.3.1]
+		DefaultDirectedGraph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
 		
 		for(String p : solution) {
-			Package pac = repo.getSpecific(p);
-			if(pac.getDepends().size() == 0) {
-				
+			graph.addVertex(p);
+		}
+		
+		for(String p : solution) {
+			Package pack = repo.getSpecific(p);
+			for(List<String> dependencies : pack.getDepends()) {
+				for(String dep : dependencies) {
+					if(graph.containsVertex(dep.toString())) {
+						graph.addEdge(p, dep.toString());
+					}
+				}
 			}
 		}
 		
+		TopologicalOrderIterator<String, DefaultEdge> topIterator;
 		
-		return orderedSolution;
+		topIterator = new TopologicalOrderIterator<>(graph);
+		String res = "";
+		ArrayList<String> topoSortedGraph = new ArrayList<>();
+		
+		while(topIterator.hasNext()) {
+			res = topIterator.next();
+			topoSortedGraph.add("+" + res);
+		}
+		
+		// We want to go up the tree, therefore we need to reverse
+		Collections.reverse(topoSortedGraph);		
+		return topoSortedGraph;
+	}
+	
+	static void prettyPrintSolution(ArrayList<String> solution) {
+		System.out.println(JSON.toJSONString(solution));
 	}
 }
