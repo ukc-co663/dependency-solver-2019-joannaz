@@ -90,13 +90,32 @@ public class Util {
 				for(Package p : packsToInstall) {
 					String currPackCNF = "";
 					currPackCNF+=p.toString();
-					currPackCNF += calcDep(p.toString(), repo);
-
+					ArrayList<ArrayList<Constraint>> dependencies = calcDep(p.toString(), repo);
+					ArrayList<ArrayList<Constraint>> depsAndCons = calcConflicts(dependencies, p.toString(), repo);
 					CNF += currPackCNF;
 				}
 			}
 		}
 		return CNF;
+	}
+	
+	static ArrayList<ArrayList<Constraint>> calcConflicts(ArrayList<ArrayList<Constraint>> deps, String id, Repository repo){
+		Package p = repo.getSpecific(id);
+		
+		List<String> cons = p.getConflicts();
+		
+		for(ArrayList<Constraint> d : deps) {
+			for(String c : cons) {
+				// Get each conflict
+				// TODO: Find conflict for each package needing to install
+//				ArrayList<ArrayList<Constraint>> p = calcConflicts(deps, c, repo);
+				Constraint con = new Constraint(Op.NEG, c.toString());
+				d.add(con);
+			}
+		}
+		
+		
+		return deps;
 	}
 
 	static ArrayList<ArrayList<Constraint>> calcDep(String id, Repository repo) {

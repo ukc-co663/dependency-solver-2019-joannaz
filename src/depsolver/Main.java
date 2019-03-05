@@ -33,9 +33,9 @@ public class Main {
 		String constraintsPath 	= 	null;
 
 		if(args.length == 0) {
-			repoPath = "tests/seen-7/repository.json";
-			initialPath = "tests/seen-7/initial.json";
-			constraintsPath = "tests/seen-7/constraints.json";
+			repoPath = "tests/seen-4/repository.json";
+			initialPath = "tests/seen-4/initial.json";
+			constraintsPath = "tests/seen-4/constraints.json";
 		} else {
 			repoPath 		= args[0];
 			initialPath 	= args[1];
@@ -83,7 +83,10 @@ public class Main {
 		
 		System.out.println("------------------------ CNF STUFF ---------------------");
 		
-		System.out.println(Util.calcDep("Y23=1", realRepo));
+		ArrayList<ArrayList<Constraint>> dependencies = Util.calcDep("A=1", realRepo);
+		ArrayList<ArrayList<Constraint>> depsAndCons = Util.calcConflicts(dependencies, "A=1", realRepo);
+		
+		System.out.println(depsAndCons);
 		
 			
 		System.out.println("---------------------------------------------------------");
