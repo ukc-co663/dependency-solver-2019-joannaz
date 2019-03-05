@@ -45,7 +45,7 @@ namespace DepSolver
 
         public static List<string> Solve(List<string> toInstall, List<string> install)
         {
-            toInstall.ForEach(con =>
+            toInstall.ForEach(con => 
             {
                 var name = con.Substring(0, 1);
                 var op = con.Substring(1, con.Length - 1);
@@ -63,6 +63,7 @@ namespace DepSolver
                             // 
                             packToInstall[0].Depends.ForEach(x =>
                             {
+                                
                                 // Traverse down and recurse?
                             });
                         }
