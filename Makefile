@@ -4,7 +4,6 @@ compile: deps
 	sudo ./compile.sh
 
 deps:
-	chmod -R 755 `pwd`
 	./install_deps.sh
 	touch deps
 
