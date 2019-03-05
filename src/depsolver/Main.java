@@ -56,8 +56,8 @@ public class Main {
 		realRepo.calculateDeps(repo);
 		realRepo.calculateConflicts(repo);
 
-		//Util.solve(toInstall, realRepo);
-		System.out.println("[]");
+		Util.solve(toInstall, realRepo);
+		
 
 	}
 
