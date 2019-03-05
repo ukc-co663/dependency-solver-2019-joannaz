@@ -1,14 +1,14 @@
 all: compile
 
 compile: deps
-	sudo ./compile.sh
+	sh ./compile.sh
 
 deps:
-	./install_deps.sh
+	sh ./install_deps.sh
 	touch deps
 
 test: compile
-	./run_tests.sh
+	sh ./run_tests.sh
 
 clean:
 	rm -rf classes
