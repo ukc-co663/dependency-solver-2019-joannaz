@@ -33,9 +33,9 @@ public class Main {
 		String constraintsPath 	= 	null;
 
 		if(args.length == 0) {
-			repoPath = "tests/seen-9/repository.json";
-			initialPath = "tests/seen-9/initial.json";
-			constraintsPath = "tests/seen-9/constraints.json";
+			repoPath = "tests/seen-7/repository.json";
+			initialPath = "tests/seen-7/initial.json";
+			constraintsPath = "tests/seen-7/constraints.json";
 		} else {
 			repoPath 		= args[0];
 			initialPath 	= args[1];
@@ -55,8 +55,6 @@ public class Main {
 
 		realRepo.calculateDeps(repo);
 		realRepo.calculateConflicts(repo);
-
-		//testCode();
 
 		Util.solve(toInstall, realRepo);
 
@@ -90,7 +88,6 @@ public class Main {
 		ArrayList<ArrayList<String>> nf = Util.convertBack(validSolutions);
 		ArrayList<String> smallestSol = Util.getSmallestWeight(nf, realRepo);
 		Util.reorderDependencies(smallestSol, realRepo);
-			
 			
 		System.out.println("---------------------------------------------------------");
 		

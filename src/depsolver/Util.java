@@ -80,9 +80,12 @@ public class Util {
 
 	public static void solve(List<String> toInstall, Repository repo) {
 		for(String packageToDo : toInstall) {
+			
 			ArrayList<ArrayList<String>> solutions = new ArrayList<ArrayList<String>>();
 			String packageToDoName = packageToDo.substring(1);
-			String packageOperator = packageToDo.substring(0, packageToDo.length() -1).trim();
+
+			String packageOperator = packageToDo.substring(0, 1).trim();			
+
 			// Install
 			if(packageOperator.equals("+")) {
 				// List of packs to install			
@@ -108,6 +111,7 @@ public class Util {
 		ArrayList<String> smallestSol = getSmallestWeight(allSolutions, repo);
 		
 		prettyPrintSolution(smallestSol);
+		
 	}
 
 	/**
@@ -161,7 +165,7 @@ public class Util {
 	static ArrayList<ArrayList<Constraint>> calcDep(String id, Repository repo) {
 		ArrayList<ArrayList<Constraint>> comb = new ArrayList<ArrayList<Constraint>>();
 		Package p = repo.getSpecific(id);
-
+		
 		List<List<String>> deps = p.getDepends();
 
 		// Base case, no dependencies
