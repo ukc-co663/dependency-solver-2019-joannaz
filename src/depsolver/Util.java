@@ -3,8 +3,11 @@ package depsolver;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 
+import org.jgrapht.Graph;
+import org.jgrapht.alg.cycle.CycleDetector;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.traverse.TopologicalOrderIterator;
@@ -23,6 +26,7 @@ import com.google.common.collect.HashBiMap;
 public class Util {
 
 	static BiMap<String,String> dict = HashBiMap.create();
+	static DefaultDirectedGraph<String, DefaultEdge> graph;
 
 	/**
 	 * Lexicographically compare versions
@@ -173,17 +177,37 @@ public class Util {
 	}
 
 	/**
-	 * Traverse the repository to get the dependency list
+	 * Traverse the repository to get the dependency list, Initial
 	 * @param id ID of the package to be installed
 	 * @param repo The repository
 	 * @return The List of dependencies to be installed without constraints
 	 */
 	static ArrayList<ArrayList<Constraint>> calcDep(String id, Repository repo, ArrayList<String> initial) {
+		graph = new DefaultDirectedGraph<>(DefaultEdge.class);
+		
+		// All possible combinations
 		ArrayList<ArrayList<Constraint>> comb = new ArrayList<ArrayList<Constraint>>();
+		// Make a graph to check for cycles
+		
+		
+		// Current repo to install
 		Package p = repo.getSpecific(id);
 		
-		List<List<String>> deps = p.getDepends();
+		/**
+		 * ADD A TO GRAPH
+		 */
+		graph.addVertex(id);
+		CycleDetector<String, DefaultEdge> cycleDetector;
+		cycleDetector = new CycleDetector<>(graph);
 		
+		/**
+		 * GET DEPS
+		 */
+		List<List<String>> deps = p.getDepends();
+						
+		/**
+		 * Add already installed stuff to list
+		 */
 		ArrayList<Constraint> initialComb = new ArrayList<Constraint>();
 		
 		for(String s : initial) {
@@ -201,11 +225,34 @@ public class Util {
 
 			ArrayList<ArrayList<Constraint>> temp = new ArrayList<>();
 
-			for(String or : and) {				
+			for(String or : and) {
+				graph.addVertex(or);
+				graph.addEdge(id, or);
+				cycleDetector = new CycleDetector<>(graph);
+
+				if(cycleDetector.detectCycles()) {
+					// there is a cycle
+					removeAllEdges(graph);
+					comb.add(new ArrayList<Constraint>());
+					continue;
+				}		
+				
+				
 				ArrayList<ArrayList<Constraint>> dependencies = calcDep(or, repo);
 				for(ArrayList<Constraint> combination : dependencies) {
 
 					for(ArrayList<Constraint> r : comb) {
+						graph.addVertex(r.toString());
+						graph.addEdge(or, r.toString());
+						cycleDetector = new CycleDetector<>(graph);
+
+						if(cycleDetector.detectCycles()) {
+							System.out.println("Cycle detected 2 ");
+							// there is a cycle
+							removeAllEdges(graph);							
+							comb.add(new ArrayList<Constraint>());
+							continue;
+						}	
 						ArrayList<Constraint> clone = (ArrayList<Constraint>) r.clone();
 						clone.addAll(combination);
 						temp.add(clone);
@@ -215,13 +262,30 @@ public class Util {
 			}
 			comb = temp;
 		}
-		
+		removeAllEdges(graph);
 		return comb;
 	}
 	
+	public static <V,E> void removeAllEdges(Graph<V, E> graph) {
+		LinkedList<E> copy = new LinkedList<E>();
+		for (E e : graph.edgeSet()) {
+			copy.add(e);
+		}
+		graph.removeAllEdges(copy);
+	}
+	
+	/**
+	 * Inner function without initial setup
+	 * @param id
+	 * @param repo
+	 * @return
+	 */
 	static ArrayList<ArrayList<Constraint>> calcDep(String id, Repository repo) {
 		ArrayList<ArrayList<Constraint>> comb = new ArrayList<ArrayList<Constraint>>();
 		Package p = repo.getSpecific(id);
+		
+		graph.addVertex(id);
+		CycleDetector<String, DefaultEdge> cycleDetector;
 		
 		List<List<String>> deps = p.getDepends();
 
@@ -235,11 +299,30 @@ public class Util {
 
 			ArrayList<ArrayList<Constraint>> temp = new ArrayList<>();
 
-			for(String or : and) {				
+			for(String or : and) {			
+				graph.addVertex(or);
+				graph.addEdge(id, or);
+				cycleDetector = new CycleDetector<>(graph);
+				if(cycleDetector.detectCycles()) {
+					// there is a cycle
+					removeAllEdges(graph);
+					comb.add(new ArrayList<Constraint>());
+					continue;
+				}		
 				ArrayList<ArrayList<Constraint>> dependencies = calcDep(or, repo);
 				for(ArrayList<Constraint> combination : dependencies) {
 
 					for(ArrayList<Constraint> r : comb) {
+						graph.addVertex(r.toString());
+						graph.addEdge(or, r.toString());
+						cycleDetector = new CycleDetector<>(graph);
+
+						if(cycleDetector.detectCycles()) {
+							// there is a cycle
+							removeAllEdges(graph);							
+							comb.add(new ArrayList<Constraint>());
+							continue;
+						}	
 						ArrayList<Constraint> clone = (ArrayList<Constraint>) r.clone();
 						clone.addAll(combination);
 						temp.add(clone);
@@ -249,6 +332,7 @@ public class Util {
 			}
 			comb = temp;
 		}
+		removeAllEdges(graph);
 		return comb;
 	}
 	
