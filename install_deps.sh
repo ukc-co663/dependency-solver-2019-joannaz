@@ -6,3 +6,4 @@ wget -O lib/logicng-1.4.1.jar http://central.maven.org/maven2/org/logicng/logicn
 wget -O lib/guava-25.1-jre.jar http://central.maven.org/maven2/com/google/guava/guava/25.1-jre/guava-25.1-jre.jar
 wget -O lib/antlr4-runtime-4.7.jar http://central.maven.org/maven2/org/antlr/antlr4-runtime/4.7/antlr4-runtime-4.7.jar
 wget -O lib/jgrapht-jdk1.5-0.7.3.jar http://central.maven.org/maven2/org/jgrapht/jgrapht-jdk1.5/0.7.3/jgrapht-jdk1.5-0.7.3.jar
+wget -O lib/jheaps-0.9.jar http://central.maven.org/maven2/org/jheaps/jheaps/0.9/jheaps-0.9.jar
