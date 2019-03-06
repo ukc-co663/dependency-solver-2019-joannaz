@@ -124,19 +124,6 @@ public class Repository {
 
 				repo.get(p.getName()).get(p.getVersion()).setDepends(ands);
 			}
-
-
-
-		}
-
-
-
-		for(String a : repo.keySet()) {
-			HashMap<String, Package> ps = repo.get(a);
-			for(String v : ps.keySet()) {
-				Package specificVer = ps.get(v);
-				List<List<String>> dependencies = specificVer.getDepends();
-			}
 		}
 	}
 

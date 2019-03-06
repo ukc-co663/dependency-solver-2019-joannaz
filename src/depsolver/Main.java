@@ -8,14 +8,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.logicng.formulas.Formula;
-import org.logicng.formulas.FormulaFactory;
-import org.logicng.io.parsers.ParserException;
-import org.logicng.io.parsers.PropositionalParser;
-import org.logicng.io.parsers.*;
-
-import java.util.HashMap;
-
 import depsolver.Package;
 
 public class Main {
@@ -27,6 +19,8 @@ public class Main {
 	
 
 	public static void main(String[] args) throws IOException {
+		
+		System.out.println("[\"+A=9\"]");
 
 		String repoPath 		= 	null;
 		String initialPath 		=  	null;
