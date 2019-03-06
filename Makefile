@@ -1,8 +1,6 @@
 all: compile
 
 compile: deps
-	apt install openjdk-11-jre-headless -y
-	apt install openjdk-11-jdk -y
 	sh ./compile.sh
 
 deps:
