@@ -23,19 +23,6 @@ public class Package{
 	public void setConflicts(List<String> conflicts) { this.conflicts = conflicts; }
 
 	public String toString() {
-	return name + "=" + version;
-	}
-	
-	public String toCNFString() {
-		String x = name + version;
-		if(conflicts.size() > 0) {
-			for(String s : conflicts) {
-				x += "&";
-				String[] var = s.split("[<>=]+");
-				x += ("~" + "(" + var[0]+var[1] + ")");
-			}
-		}
-		
-		return x;
+	  return name + "=" + version;
 	}
 }
