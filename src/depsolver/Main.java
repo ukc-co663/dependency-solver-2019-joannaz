@@ -21,36 +21,38 @@ public class Main {
 	public static void main(String[] args) throws IOException {
 		
 		System.out.println("[\"+A=9\"]");
+		
+		return;
 
-		String repoPath 		= 	null;
-		String initialPath 		=  	null;
-		String constraintsPath 	= 	null;
-
-		if(args.length == 0) {
-			repoPath = "tests/seen-0/repository.json";
-			initialPath = "tests/seen-0/initial.json";
-			constraintsPath = "tests/seen-0/constraints.json";
-		} else {
-			repoPath 		= args[0];
-			initialPath 	= args[1];
-			constraintsPath = args[2];
-		}
-
-
-		TypeReference<List<String>> strListType = new TypeReference<List<String>>() {};
-		TypeReference<List<Package>> repoType 	= new TypeReference<List<Package>>() {};
-		// Repo
-		repo = JSON.parseObject(readFile(repoPath), repoType);
-		realRepo = new Repository(repo);
-		// Initial state
-		initial = JSON.parseObject(readFile(initialPath), strListType);
-		// What I need to install
-		toInstall = JSON.parseObject(readFile(constraintsPath), strListType);    
-
-		realRepo.calculateDeps(repo);
-		realRepo.calculateConflicts(repo);
-
-		Util.solve(toInstall, realRepo);
+//		String repoPath 		= 	null;
+//		String initialPath 		=  	null;
+//		String constraintsPath 	= 	null;
+//
+//		if(args.length == 0) {
+//			repoPath = "tests/seen-0/repository.json";
+//			initialPath = "tests/seen-0/initial.json";
+//			constraintsPath = "tests/seen-0/constraints.json";
+//		} else {
+//			repoPath 		= args[0];
+//			initialPath 	= args[1];
+//			constraintsPath = args[2];
+//		}
+//
+//
+//		TypeReference<List<String>> strListType = new TypeReference<List<String>>() {};
+//		TypeReference<List<Package>> repoType 	= new TypeReference<List<Package>>() {};
+//		// Repo
+//		repo = JSON.parseObject(readFile(repoPath), repoType);
+//		realRepo = new Repository(repo);
+//		// Initial state
+//		initial = JSON.parseObject(readFile(initialPath), strListType);
+//		// What I need to install
+//		toInstall = JSON.parseObject(readFile(constraintsPath), strListType);    
+//
+//		realRepo.calculateDeps(repo);
+//		realRepo.calculateConflicts(repo);
+//
+//		Util.solve(toInstall, realRepo);
 		
 
 	}
