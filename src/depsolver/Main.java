@@ -25,9 +25,9 @@ public class Main {
 		String constraintsPath 	= 	null;
 
 		if(args.length == 0) {
-			repoPath = "tests/seen-8/repository.json";
-			initialPath = "tests/seen-8/initial.json";
-			constraintsPath = "tests/seen-8/constraints.json";
+			repoPath = "tests/seen-9/repository.json";
+			initialPath = "tests/seen-9/initial.json";
+			constraintsPath = "tests/seen-9/constraints.json";
 		} else {
 			repoPath 		= args[0];
 			initialPath 	= args[1];
@@ -57,6 +57,7 @@ public class Main {
 		BufferedReader br 	= new BufferedReader(new FileReader(filename));
 		StringBuilder sb 	= new StringBuilder();
 		br.lines().forEach(line -> sb.append(line));
+		br.close();
 		return sb.toString();
 	}
 
@@ -78,7 +79,7 @@ public class Main {
 		ArrayList<ArrayList<Constraint>> depsAndCons = Util.calcConflicts(dependencies, realRepo);
 		ArrayList<String> solutions = Util.calculateFormula(depsAndCons);
 		ArrayList<String> validSolutions = Util.SATSolve(solutions);
-		ArrayList<ArrayList<String>> nf = Util.convertBack(validSolutions);
+		ArrayList<ArrayList<String>> nf = Util.convertBack(validSolutions, initial);
 		ArrayList<String> smallestSol = Util.getSmallestWeight(nf, realRepo);
 		Util.reorderDependencies(smallestSol, realRepo);
 			

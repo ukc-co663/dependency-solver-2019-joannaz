@@ -2,7 +2,6 @@ package depsolver;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -104,8 +103,9 @@ public class Util {
   }
 
   static void solveMain(ArrayList<String> toInstall, Repository repo, ArrayList<String> initial, ArrayList<String> toUninstall) {
+    
     ArrayList<ArrayList<ArrayList<String>>> allSolutions = new ArrayList<ArrayList<ArrayList<String>>>();
-
+    
     for(String p : toInstall) {
       ArrayList<Package> allPackages = repo.getPackages(p);
       for(Package pack : allPackages) {
@@ -113,45 +113,35 @@ public class Util {
         ArrayList<ArrayList<Constraint>> depsAndCons = calcConflicts(dependencies, repo);
         ArrayList<String> solutions = calculateFormula(depsAndCons);
         ArrayList<String> validSolutions = SATSolve(solutions);
-        ArrayList<ArrayList<String>> nf = convertBack(validSolutions);
+        ArrayList<ArrayList<String>> nf = convertBack(validSolutions, initial);
         allSolutions.add(nf);
       }
     }
-    ArrayList<ArrayList<ArrayList<Constraint>>> convertedSolutions = new ArrayList<ArrayList<ArrayList<Constraint>>>();
-    for(ArrayList<ArrayList<String>> comb : allSolutions) {
-      ArrayList<ArrayList<Constraint>> all = new ArrayList<ArrayList<Constraint>>();
-      for(ArrayList<String> s : comb) {
-        ArrayList<Constraint> cons = new ArrayList<Constraint>();
-        for(String sol : s) {
-          Constraint c = new Constraint(Op.POS, sol);
-          cons.add(c);
-        }
-        all.add(cons);
-      }
-      convertedSolutions.add(all);
-    }
-
-    Collections2.permutations(convertedSolutions);
-
-    ArrayList<ArrayList<String>> x = new ArrayList<ArrayList<String>>();
     
-    for(ArrayList<ArrayList<Constraint>> c : convertedSolutions) {
-      
-      ArrayList<String> solutions = calculateFormula(c);
-      ArrayList<String> validSolutions = SATSolve(solutions);
-      ArrayList<ArrayList<String>> nf = convertBack(validSolutions);
-      ArrayList<String> smallestSol = getSmallestWeight(nf, repo);
-      ArrayList<String> sortedGraph = reorderDependencies(smallestSol, repo);
-      x.add(sortedGraph);
+    ArrayList<ArrayList<String>> allPermutations =  new ArrayList<ArrayList<String>>();
+    
+    
+    for(int i = 0; i < allSolutions.size(); i++) {
+      ArrayList<ArrayList<String>> combin = allSolutions.get(i);
+      for(int j = 0; j < combin.size(); j++) {
+        ArrayList<String> q = combin.get(j);
+        for(int z = 0; z < q.size(); z++) {
+          if(allPermutations.size() < combin.size()) {
+            ArrayList<String> h = new ArrayList<String>();
+            allPermutations.add(h);
+          }
+          
+          allPermutations.get(z).add(q.get(z));         
+        }
+      }
     }
     
     ArrayList<ArrayList<Constraint>> cons = new ArrayList<ArrayList<Constraint>>();
     
-    for(ArrayList<String> s : x) {
+    for(ArrayList<String> s : allPermutations) {
       ArrayList<Constraint> poo = new ArrayList<>();
       for(String o : s) {
-        String packageToDoName = o.substring(1);
-        Constraint y = new Constraint(Op.POS, packageToDoName);
+        Constraint y = new Constraint(Op.POS, o);
         poo.add(y);
       }
       cons.add(poo);
@@ -160,18 +150,12 @@ public class Util {
     
     ArrayList<String> solutions = calculateFormula(cons);
     ArrayList<String> validSolutions = SATSolve(solutions);
-    ArrayList<ArrayList<String>> nf = convertBack(validSolutions);
+    ArrayList<ArrayList<String>> nf = convertBack(validSolutions, initial);
     ArrayList<String> smallestSol = getSmallestWeight(nf, repo);
     ArrayList<String> sortedGraph = reorderDependencies(smallestSol, repo);
-    
     prettyPrintSolution(sortedGraph);
 
   }
-
-
-
-
-
 
   /**
    * Function to get the combinations of possible solutions for this repository
@@ -183,16 +167,6 @@ public class Util {
     ArrayList<ArrayList<Constraint>> deps = calcDep(id, repo, initial);
     ArrayList<ArrayList<Constraint>> depsAndCons = calcConflicts(deps, repo);
     return depsAndCons;
-  }
-
-  static ArrayList<ArrayList<Constraint>> calcCyclic(ArrayList<ArrayList<Constraint>> deps, Repository repo) {
-    ArrayList<ArrayList<Constraint>> newListWithoutCycles = new ArrayList<ArrayList<Constraint>>();
-
-    // TODO
-
-
-
-    return newListWithoutCycles;
   }
 
   /**
@@ -299,6 +273,7 @@ public class Util {
               comb.add(new ArrayList<Constraint>());
               continue;
             }	
+            @SuppressWarnings("unchecked")
             ArrayList<Constraint> clone = (ArrayList<Constraint>) r.clone();
             clone.addAll(combination);
             temp.add(clone);
@@ -311,7 +286,6 @@ public class Util {
     removeAllEdges(graph);
     return comb;
   }
-
 
   /**
    * Inner function without initial setup
@@ -365,6 +339,7 @@ public class Util {
               comb.add(new ArrayList<Constraint>());
               continue;
             }	
+            @SuppressWarnings("unchecked")
             ArrayList<Constraint> clone = (ArrayList<Constraint>) r.clone();
             clone.addAll(combination);
             temp.add(clone);
@@ -377,8 +352,6 @@ public class Util {
     removeAllEdges(graph);
     return comb;
   }
-
-
 
   /**
    * Calculate formula for SAT solver
@@ -458,7 +431,7 @@ public class Util {
    * @param validSolutions
    * @return
    */
-  static ArrayList<ArrayList<String>> convertBack(ArrayList<String> validSolutions) {
+  static ArrayList<ArrayList<String>> convertBack(ArrayList<String> validSolutions, ArrayList<String> initial) {
     ArrayList<ArrayList<String>> totalValidSolutions = new ArrayList<ArrayList<String>>();
     for(String valSol : validSolutions) {
       ArrayList<String> valSolConvert = new ArrayList<>();
@@ -466,7 +439,12 @@ public class Util {
       for(String p : packages) {
         String packageName = p.trim();
         if(!packageName.contains("~")) {
-          valSolConvert.add(dict.get(packageName));
+          String realName = dict.get(packageName);
+          // Remove dupes
+          if(!initial.contains(realName) && !valSolConvert.contains(realName)) {
+            valSolConvert.add(realName);
+          }
+          
         }
       }
       totalValidSolutions.add(valSolConvert);
@@ -475,6 +453,7 @@ public class Util {
     return totalValidSolutions;
   }
 
+  
   /**
    * Get the smallest weight of the solutions
    * @param validSolutions the list of valid solutions
@@ -482,7 +461,6 @@ public class Util {
    * @return the smallest solution
    */
   static ArrayList<String> getSmallestWeight(ArrayList<ArrayList<String>> validSolutions, Repository repo) {
-
     int bestWeight = Integer.MAX_VALUE;
     ArrayList<String> bestSolution = new ArrayList<String>();
 
