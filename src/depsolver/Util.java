@@ -184,6 +184,8 @@ public class Util {
 	 */
 	static ArrayList<ArrayList<Constraint>> calcDep(String id, Repository repo, ArrayList<String> initial) {
 		graph = new DefaultDirectedGraph<>(DefaultEdge.class);
+		CycleDetector<String, DefaultEdge> cycleDetector;
+		cycleDetector = new CycleDetector<>(graph);
 		
 		// All possible combinations
 		ArrayList<ArrayList<Constraint>> comb = new ArrayList<ArrayList<Constraint>>();
@@ -193,21 +195,14 @@ public class Util {
 		// Current repo to install
 		Package p = repo.getSpecific(id);
 		
-		/**
-		 * ADD A TO GRAPH
-		 */
+		// Add initial package to a node in the graph
 		graph.addVertex(id);
-		CycleDetector<String, DefaultEdge> cycleDetector;
-		cycleDetector = new CycleDetector<>(graph);
+
 		
-		/**
-		 * GET DEPS
-		 */
+		// Get dependencies of initial package
 		List<List<String>> deps = p.getDepends();
 						
-		/**
-		 * Add already installed stuff to list
-		 */
+		// Add the initial already installed packages to the combination
 		ArrayList<Constraint> initialComb = new ArrayList<Constraint>();
 		
 		for(String s : initial) {
@@ -226,29 +221,31 @@ public class Util {
 			ArrayList<ArrayList<Constraint>> temp = new ArrayList<>();
 
 			for(String or : and) {
+				// ADd the new package to the dependency graph
 				graph.addVertex(or);
 				graph.addEdge(id, or);
-				cycleDetector = new CycleDetector<>(graph);
 
+				// Check if any of the dependencies have cycles 
 				if(cycleDetector.detectCycles()) {
-					// there is a cycle
+					// there is a cycle reset the graph and do not add this
+					// solution to the total solutions.
 					removeAllEdges(graph);
 					comb.add(new ArrayList<Constraint>());
 					continue;
-				}		
+				}
 				
-				
+				// Get dependencies of current dependency
 				ArrayList<ArrayList<Constraint>> dependencies = calcDep(or, repo);
 				for(ArrayList<Constraint> combination : dependencies) {
 
 					for(ArrayList<Constraint> r : comb) {
+						// Add the dependency to the graph
 						graph.addVertex(r.toString());
 						graph.addEdge(or, r.toString());
-						cycleDetector = new CycleDetector<>(graph);
 
+						// Check if there is a cycle
 						if(cycleDetector.detectCycles()) {
-							System.out.println("Cycle detected 2 ");
-							// there is a cycle
+							// There is a cycle, skip and reset graph
 							removeAllEdges(graph);							
 							comb.add(new ArrayList<Constraint>());
 							continue;
@@ -266,13 +263,7 @@ public class Util {
 		return comb;
 	}
 	
-	public static <V,E> void removeAllEdges(Graph<V, E> graph) {
-		LinkedList<E> copy = new LinkedList<E>();
-		for (E e : graph.edgeSet()) {
-			copy.add(e);
-		}
-		graph.removeAllEdges(copy);
-	}
+
 	
 	/**
 	 * Inner function without initial setup
@@ -284,8 +275,9 @@ public class Util {
 		ArrayList<ArrayList<Constraint>> comb = new ArrayList<ArrayList<Constraint>>();
 		Package p = repo.getSpecific(id);
 		
+		// Add current package into graph
 		graph.addVertex(id);
-		CycleDetector<String, DefaultEdge> cycleDetector;
+		CycleDetector<String, DefaultEdge> cycleDetector = new CycleDetector<>(graph);
 		
 		List<List<String>> deps = p.getDepends();
 
@@ -299,12 +291,14 @@ public class Util {
 
 			ArrayList<ArrayList<Constraint>> temp = new ArrayList<>();
 
-			for(String or : and) {			
+			for(String or : and) {
+				// Add current dependency into the graph
 				graph.addVertex(or);
 				graph.addEdge(id, or);
-				cycleDetector = new CycleDetector<>(graph);
+				// Check for cycles
 				if(cycleDetector.detectCycles()) {
-					// there is a cycle
+					// There is a cycle, reset graph edges
+					// And ignore solution
 					removeAllEdges(graph);
 					comb.add(new ArrayList<Constraint>());
 					continue;
@@ -313,12 +307,12 @@ public class Util {
 				for(ArrayList<Constraint> combination : dependencies) {
 
 					for(ArrayList<Constraint> r : comb) {
+						// Again, add current dependency to the graph
 						graph.addVertex(r.toString());
 						graph.addEdge(or, r.toString());
-						cycleDetector = new CycleDetector<>(graph);
-
+						// Checks for cycles
 						if(cycleDetector.detectCycles()) {
-							// there is a cycle
+							// There is a cycle therefore reset graph.
 							removeAllEdges(graph);							
 							comb.add(new ArrayList<Constraint>());
 							continue;
@@ -504,7 +498,24 @@ public class Util {
 		return topoSortedGraph;
 	}
 	
+	/**
+	 * Pretty print the solution in the specified form
+	 * @param solution the Solution to be printed
+	 */
 	static void prettyPrintSolution(ArrayList<String> solution) {
 		System.out.println(JSON.toJSONString(solution));
+	}
+	
+	/**
+	 * Remove all edges from the graph. Taken from here:
+	 * http://jgrapht-users.107614.n3.nabble.com/remove-all-edges-and-vertices-td4024747.html
+	 * @param graph Graph to remove the edges from
+	 */
+	public static <V,E> void removeAllEdges(Graph<V, E> graph) {
+		LinkedList<E> copy = new LinkedList<E>();
+		for (E e : graph.edgeSet()) {
+			copy.add(e);
+		}
+		graph.removeAllEdges(copy);
 	}
 }
