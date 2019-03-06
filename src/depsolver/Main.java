@@ -12,9 +12,9 @@ import depsolver.Package;
 
 public class Main {
 
-	static List<Package> 	repo;
-	static List<String> 	initial;
-	static List<String> 	toInstall;
+	static ArrayList<Package> 	repo;
+	static ArrayList<String> 	initial;
+	static ArrayList<String> 	toInstall;
 	static Repository 		realRepo;
 	
 
@@ -25,9 +25,9 @@ public class Main {
 		String constraintsPath 	= 	null;
 
 		if(args.length == 0) {
-			repoPath = "tests/seen-0/repository.json";
-			initialPath = "tests/seen-0/initial.json";
-			constraintsPath = "tests/seen-0/constraints.json";
+			repoPath = "tests/seen-5/repository.json";
+			initialPath = "tests/seen-5/initial.json";
+			constraintsPath = "tests/seen-5/constraints.json";
 		} else {
 			repoPath 		= args[0];
 			initialPath 	= args[1];
@@ -35,8 +35,8 @@ public class Main {
 		}
 
 
-		TypeReference<List<String>> strListType = new TypeReference<List<String>>() {};
-		TypeReference<List<Package>> repoType 	= new TypeReference<List<Package>>() {};
+		TypeReference<ArrayList<String>> strListType = new TypeReference<ArrayList<String>>() {};
+		TypeReference<ArrayList<Package>> repoType 	= new TypeReference<ArrayList<Package>>() {};
 		// Repo
 		repo = JSON.parseObject(readFile(repoPath), repoType);
 		realRepo = new Repository(repo);
@@ -48,7 +48,7 @@ public class Main {
 		realRepo.calculateDeps(repo);
 		realRepo.calculateConflicts(repo);
 
-		Util.solve(toInstall, realRepo);
+		Util.solve(initial,toInstall, realRepo);
 		
 
 	}

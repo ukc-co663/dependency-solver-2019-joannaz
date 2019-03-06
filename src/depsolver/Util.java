@@ -78,27 +78,29 @@ public class Util {
 		return returnVal;
 	}
 
-	public static void solve(List<String> toInstall, Repository repo) {
-		for(String packageToDo : toInstall) {
-			
+	public static void solve(ArrayList<String> initial, List<String> toInstall, Repository repo) {
+		for(String packageToDo : toInstall) {			
 			ArrayList<ArrayList<String>> solutions = new ArrayList<ArrayList<String>>();
 			String packageToDoName = packageToDo.substring(1);
 
-			String packageOperator = packageToDo.substring(0, 1).trim();			
+			String packageOperator = packageToDo.substring(0, 1).trim();
 
 			// Install
 			if(packageOperator.equals("+")) {
 				// List of packs to install			
-				solveMain(packageToDoName, repo);
+				solveMain(packageToDoName, repo, initial);
+			}
+			else if(packageOperator.equals("-")) {
+				uninstall(packageToDoName, repo, initial);
 			}
 		}
 	}
 	
-	static void solveMain(String p, Repository repo) {
+	static void solveMain(String p, Repository repo, ArrayList<String> initial) {
 		ArrayList<ArrayList<String>> allSolutions = new ArrayList<ArrayList<String>>();
 		ArrayList<Package> allPackages = repo.getPackages(p);
 		for(Package pack : allPackages) {
-			ArrayList<ArrayList<Constraint>> dependencies = calc(pack.toString(), repo);
+			ArrayList<ArrayList<Constraint>> dependencies = calc(pack.toString(), repo, initial);
 			ArrayList<ArrayList<Constraint>> depsAndCons = calcConflicts(dependencies, repo);
 			ArrayList<String> solutions = calculateFormula(depsAndCons);
 			ArrayList<String> validSolutions = SATSolve(solutions);
@@ -111,7 +113,11 @@ public class Util {
 		ArrayList<String> smallestSol = getSmallestWeight(allSolutions, repo);
 		
 		prettyPrintSolution(smallestSol);
-		
+	}
+	
+	static void uninstall(String name, Repository repo, ArrayList<String> initial){
+		// We need to uninstall name
+		// TODO
 	}
 
 	/**
@@ -120,10 +126,20 @@ public class Util {
 	 * @param repo Repository
 	 * @return Combination of solutions
 	 */
-	static ArrayList<ArrayList<Constraint>> calc(String id, Repository repo){
-		ArrayList<ArrayList<Constraint>> deps = calcDep(id, repo);
+	static ArrayList<ArrayList<Constraint>> calc(String id, Repository repo, ArrayList<String> initial){
+		ArrayList<ArrayList<Constraint>> deps = calcDep(id, repo, initial);
 		ArrayList<ArrayList<Constraint>> depsAndCons = calcConflicts(deps, repo);
 		return depsAndCons;
+	}
+	
+	static ArrayList<ArrayList<Constraint>> calcCyclic(ArrayList<ArrayList<Constraint>> deps, Repository repo) {
+		ArrayList<ArrayList<Constraint>> newListWithoutCycles = new ArrayList<ArrayList<Constraint>>();
+		
+		// TODO
+		
+		
+		
+		return newListWithoutCycles;
 	}
 
 	/**
@@ -162,6 +178,47 @@ public class Util {
 	 * @param repo The repository
 	 * @return The List of dependencies to be installed without constraints
 	 */
+	static ArrayList<ArrayList<Constraint>> calcDep(String id, Repository repo, ArrayList<String> initial) {
+		ArrayList<ArrayList<Constraint>> comb = new ArrayList<ArrayList<Constraint>>();
+		Package p = repo.getSpecific(id);
+		
+		List<List<String>> deps = p.getDepends();
+		
+		ArrayList<Constraint> initialComb = new ArrayList<Constraint>();
+		
+		for(String s : initial) {
+			Constraint c = new Constraint(Op.POS, s);
+			initialComb.add(c);
+		}
+
+		// Base case, no dependencies
+		ArrayList<Constraint> singleComb = new ArrayList<>(initialComb);			
+		singleComb.add(new Constraint(Op.POS, id));
+		comb.add(singleComb);
+
+		// Some dependencies
+		for(List<String> and : deps) {
+
+			ArrayList<ArrayList<Constraint>> temp = new ArrayList<>();
+
+			for(String or : and) {				
+				ArrayList<ArrayList<Constraint>> dependencies = calcDep(or, repo);
+				for(ArrayList<Constraint> combination : dependencies) {
+
+					for(ArrayList<Constraint> r : comb) {
+						ArrayList<Constraint> clone = (ArrayList<Constraint>) r.clone();
+						clone.addAll(combination);
+						temp.add(clone);
+					}
+
+				}
+			}
+			comb = temp;
+		}
+		
+		return comb;
+	}
+	
 	static ArrayList<ArrayList<Constraint>> calcDep(String id, Repository repo) {
 		ArrayList<ArrayList<Constraint>> comb = new ArrayList<ArrayList<Constraint>>();
 		Package p = repo.getSpecific(id);
@@ -194,6 +251,8 @@ public class Util {
 		}
 		return comb;
 	}
+	
+
 
 	/**
 	 * Calculate formula for SAT solver
@@ -238,7 +297,7 @@ public class Util {
 			solutions.add(f);
 		}
 		return solutions;
-	}
+	}	
 
 	/**
 	 * SAT Solve the formulas
@@ -302,8 +361,13 @@ public class Util {
 		ArrayList<String> bestSolution = new ArrayList<String>();
 
 		for(ArrayList<String> solution : validSolutions) {
-			int solutionWeight = 0;
+			int solutionWeight = Integer.MAX_VALUE;
+			int i = 0;
 			for(String p : solution) {
+				if(i == 0) {
+					solutionWeight = 0;
+					i++;
+				}				
 				solutionWeight += repo.getSpecific(p).getSize();
 			}
 
@@ -314,7 +378,13 @@ public class Util {
 		}
 		return bestSolution;
 	}
-
+	
+	/**
+	 * Topological Sort dependencies
+	 * @param solution
+	 * @param repo
+	 * @return
+	 */
 	static ArrayList<String> reorderDependencies(ArrayList<String> solution, Repository repo){
 		// solution = [A=2.01, C=1, D=10.3.1]
 		DefaultDirectedGraph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
