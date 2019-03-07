@@ -125,8 +125,7 @@ public class Util {
 
 			for(Package pack : allPackages) {
 				ArrayList<ArrayList<Constraint>> dependencies = calc(pack.toString(), repo, initial);
-				ArrayList<ArrayList<Constraint>> depsAndCons = calcConflicts(dependencies, repo);
-				ArrayList<String> solutions = calculateFormula(depsAndCons);
+				ArrayList<String> solutions = calculateFormula(dependencies);
 				ArrayList<String> validSolutions = SATSolve(solutions);
 				ArrayList<ArrayList<String>> nf = convertBack(validSolutions, initial);        
 				ArrayList<String> smallestSol = getSmallestWeight(nf, repo);
@@ -158,14 +157,13 @@ public class Util {
 				uninstalls.add("-"+uninstall);
 			}
 		}
-
 		e.addAll(uninstalls);
 
 
-		ArrayList<String> sortedGraph = reorderDependencies(e, repo);
+		//ArrayList<String> sortedGraph = reorderDependencies(e, repo);
 
 
-		System.out.println(JSON.toJSONString(sortedGraph));
+		System.out.println(JSON.toJSONString(e));
 
 	}
 
@@ -522,16 +520,18 @@ public class Util {
 		DefaultDirectedGraph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
 
 		for(String p : solution) {
-			prunedSol.add(p);
-			graph.addVertex(p);
+			if(p.contains("+") || p.contains("-")){
+	    		prunedSol.add(p.substring(1));
+	    		graph.addVertex(p.substring(1));
+	    	} else {
+	    		prunedSol.add(p);
+	    		graph.addVertex(p);
+	    	}
 		}
 
 		for(String p : prunedSol) {
-			String name = p;
-			if(p.contains("+") || p.contains("-")){
-				name = p.substring(1);
-			}
-			Package pack = repo.getSpecific(name);
+
+			Package pack = repo.getSpecific(p);
 			for(List<String> dependencies : pack.getDepends()) {
 				for(String dep : dependencies) {
 					if(graph.containsVertex(dep.toString())) {
@@ -553,7 +553,7 @@ public class Util {
 		}
 
 		// We want to go up the tree, therefore we need to reverse
-//		Collections.reverse(topoSortedGraph);		
+		Collections.reverse(topoSortedGraph);		
 		return topoSortedGraph;
 	}
 
