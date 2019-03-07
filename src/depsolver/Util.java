@@ -151,6 +151,12 @@ public class Util {
 
   }
   
+  /**
+   * Flattens a 2D ArrayList
+   * Taken from https://rosettacode.org/wiki/Flatten_a_list#Java
+   * @param list
+   * @return
+   */
 	public static Stream<Object> flattenToStream(List<?> list) {
 		return list.stream().flatMap(item ->
 			item instanceof List<?> ?
