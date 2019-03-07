@@ -142,8 +142,12 @@ public class Util {
 	
 	flattenedSol.addAll(uninstalls);
 	
+	ArrayList<String> variable = (ArrayList<String>)(ArrayList<?>) flattenedSol;
 	
-    System.out.println(JSON.toJSONString(flattenedSol));
+    ArrayList<String> sortedGraph = reorderDependencies(variable, repo);
+	
+	
+    System.out.println(JSON.toJSONString(sortedGraph));
 
   }
   
@@ -490,14 +494,25 @@ public class Util {
    * @return
    */
   static ArrayList<String> reorderDependencies(ArrayList<String> solution, Repository repo){
+	  
+	  ArrayList<String> prunedSol = new ArrayList<String>();
+	  
+	  
     // solution = [A=2.01, C=1, D=10.3.1]
     DefaultDirectedGraph<String, DefaultEdge> graph = new DefaultDirectedGraph<>(DefaultEdge.class);
 
     for(String p : solution) {
-      graph.addVertex(p);
+    	
+    	if(p.contains("+") || p.contains("-")){
+    		prunedSol.add(p.substring(1));
+    		graph.addVertex(p.substring(1));
+    	} else {
+    		prunedSol.add(p);
+    		graph.addVertex(p);
+    	}
     }
 
-    for(String p : solution) {
+    for(String p : prunedSol) {
       Package pack = repo.getSpecific(p);
       for(List<String> dependencies : pack.getDepends()) {
         for(String dep : dependencies) {
