@@ -25,9 +25,9 @@ public class Main {
 		String constraintsPath 	= 	null;
 
 		if(args.length == 0) {
-			repoPath = "tests/seen-9/repository.json";
-			initialPath = "tests/seen-9/initial.json";
-			constraintsPath = "tests/seen-9/constraints.json";
+			repoPath = "tests/seen-2/repository.json";
+			initialPath = "tests/seen-2/initial.json";
+			constraintsPath = "tests/seen-2/constraints.json";
 		} else {
 			repoPath 		= args[0];
 			initialPath 	= args[1];

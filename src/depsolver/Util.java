@@ -535,7 +535,7 @@ public class Util {
 			for(List<String> dependencies : pack.getDepends()) {
 				for(String dep : dependencies) {
 					if(graph.containsVertex(dep.toString())) {
-						graph.addEdge(name, dep.toString());
+						graph.addEdge(p, dep.toString());
 					}
 				}
 			}
@@ -553,7 +553,7 @@ public class Util {
 		}
 
 		// We want to go up the tree, therefore we need to reverse
-		Collections.reverse(topoSortedGraph);		
+//		Collections.reverse(topoSortedGraph);		
 		return topoSortedGraph;
 	}
 
