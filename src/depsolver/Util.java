@@ -127,7 +127,23 @@ public class Util {
       
     }
     
+    // List of Strings that are for installs
 	List<Object> flattenedSol = flattenToStream(allSolutions).collect(Collectors.toList());
+	
+	/**
+	 * Uninstall Time.
+	 */
+	ArrayList<String> uninstalls = new ArrayList<String>();
+	for(String uninstall : toUninstall) {
+		if(initial.contains(uninstall)) {
+			uninstalls.add("-"+uninstall);
+		}
+	}
+	
+	flattenedSol.addAll(uninstalls);
+	
+	Collections.reverse(flattenedSol);
+	
 	
     System.out.println(JSON.toJSONString(flattenedSol));
 
