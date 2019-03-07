@@ -1,9 +1,12 @@
 package depsolver;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import org.jgrapht.Graph;
 import org.jgrapht.alg.cycle.CycleDetector;
@@ -102,60 +105,42 @@ public class Util {
     solveMain(installList, repo, initial, uninstallList);
   }
 
-  static void solveMain(ArrayList<String> toInstall, Repository repo, ArrayList<String> initial, ArrayList<String> toUninstall) {
-    
-    ArrayList<ArrayList<ArrayList<String>>> allSolutions = new ArrayList<ArrayList<ArrayList<String>>>();
+  static void solveMain(ArrayList<String> toInstall, Repository repo, ArrayList<String> initial, ArrayList<String> toUninstall) { 
+    ArrayList<ArrayList<String>> allSolutions = new ArrayList<ArrayList<String>>();
     
     for(String p : toInstall) {
+      ArrayList<ArrayList<String>> smallestForThisPack = new ArrayList<ArrayList<String>>();
       ArrayList<Package> allPackages = repo.getPackages(p);
+      
       for(Package pack : allPackages) {
         ArrayList<ArrayList<Constraint>> dependencies = calc(pack.toString(), repo, initial);
         ArrayList<ArrayList<Constraint>> depsAndCons = calcConflicts(dependencies, repo);
         ArrayList<String> solutions = calculateFormula(depsAndCons);
         ArrayList<String> validSolutions = SATSolve(solutions);
-        ArrayList<ArrayList<String>> nf = convertBack(validSolutions, initial);
-        allSolutions.add(nf);
+        ArrayList<ArrayList<String>> nf = convertBack(validSolutions, initial);        
+        ArrayList<String> smallestSol = getSmallestWeight(nf, repo);
+        ArrayList<String> sortedGraph = reorderDependencies(smallestSol, repo);
+        smallestForThisPack.add(sortedGraph);
       }
-    }
-    
-    ArrayList<ArrayList<String>> allPermutations =  new ArrayList<ArrayList<String>>();
-    
-    
-    for(int i = 0; i < allSolutions.size(); i++) {
-      ArrayList<ArrayList<String>> combin = allSolutions.get(i);
-      for(int j = 0; j < combin.size(); j++) {
-        ArrayList<String> q = combin.get(j);
-        for(int z = 0; z < q.size(); z++) {
-          if(allPermutations.size() < combin.size()) {
-            ArrayList<String> h = new ArrayList<String>();
-            allPermutations.add(h);
-          }
-          
-          allPermutations.get(z).add(q.get(z));         
-        }
-      }
-    }
-    
-    ArrayList<ArrayList<Constraint>> cons = new ArrayList<ArrayList<Constraint>>();
-    
-    for(ArrayList<String> s : allPermutations) {
-      ArrayList<Constraint> poo = new ArrayList<>();
-      for(String o : s) {
-        Constraint y = new Constraint(Op.POS, o);
-        poo.add(y);
-      }
-      cons.add(poo);
+      
+      allSolutions.add(getSmallestWeight(smallestForThisPack, repo));
       
     }
     
-    ArrayList<String> solutions = calculateFormula(cons);
-    ArrayList<String> validSolutions = SATSolve(solutions);
-    ArrayList<ArrayList<String>> nf = convertBack(validSolutions, initial);
-    ArrayList<String> smallestSol = getSmallestWeight(nf, repo);
-    ArrayList<String> sortedGraph = reorderDependencies(smallestSol, repo);
-    prettyPrintSolution(sortedGraph);
+	List<Object> flattenedSol = flattenToStream(allSolutions).collect(Collectors.toList());
+	
+    System.out.println(JSON.toJSONString(flattenedSol));
 
   }
+  
+	public static Stream<Object> flattenToStream(List<?> list) {
+		return list.stream().flatMap(item ->
+			item instanceof List<?> ?
+			flattenToStream((List<?>)item) :
+			Stream.of(item));
+	}
+  
+
 
   /**
    * Function to get the combinations of possible solutions for this repository
