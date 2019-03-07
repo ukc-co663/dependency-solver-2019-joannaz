@@ -222,6 +222,9 @@ public class Repository {
 		if(id.contains("+")) {
 			id = id.replace("+", "");
 		}
+		if(id.contains("*")) {
+			id = id.replace("*", "");
+		}
 		String[] x = id.split("=");
 		return repo.get(x[0]).get(x[1]);
 	}

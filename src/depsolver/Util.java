@@ -2,8 +2,10 @@ package depsolver;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -125,9 +127,13 @@ public class Util {
 
 			for(Package pack : allPackages) {
 				ArrayList<ArrayList<Constraint>> dependencies = calc(pack.toString(), repo, initial);
-				ArrayList<String> solutions = calculateFormula(dependencies);
+				UninstallStructure uninstall = checkForUninstall(dependencies, initial);
+				ArrayList<String> solutions = calculateFormula(uninstall.removedUninstall);
 				ArrayList<String> validSolutions = SATSolve(solutions);
-				ArrayList<ArrayList<String>> nf = convertBack(validSolutions, initial);        
+				ArrayList<ArrayList<String>> nf = convertBack(validSolutions, initial);
+				addUninstalls(uninstall, nf);
+				// Compare each nf with uninstall.removedUninstall
+				// Add uninstallForEachSolution to each
 				ArrayList<String> smallestSol = getSmallestWeight(nf, repo);
 				ArrayList<String> sortedGraph = reorderDependencies(smallestSol, repo);
 				smallestForThisPack.add(sortedGraph);
@@ -141,13 +147,18 @@ public class Util {
 		List<Object> flattenedSol = flattenToStream(allSolutions).collect(Collectors.toList());
 		ArrayList<String> variable = (ArrayList<String>)(ArrayList<?>) flattenedSol;
 
-		ArrayList<String> e = new ArrayList<String>();
+		ArrayList<String> formattedInstalls = new ArrayList<String>();
+		ArrayList<String> formattedUninstalls = new ArrayList<String>();
 		for(String s : variable) {
-			e.add("+"+s);
+			if(s.contains("*")) {
+				formattedUninstalls.add("-"+s.substring(1));
+			} else {
+				formattedInstalls.add("+"+s);
+			}
 		}
-		
-		
-		
+
+		formattedUninstalls.addAll(formattedInstalls);
+
 		/**
 		 * Uninstall Time.
 		 */
@@ -157,13 +168,12 @@ public class Util {
 				uninstalls.add("-"+uninstall);
 			}
 		}
-		e.addAll(uninstalls);
-
+		formattedUninstalls.addAll(uninstalls);
 
 		//ArrayList<String> sortedGraph = reorderDependencies(e, repo);
 
 
-		System.out.println(JSON.toJSONString(e));
+		System.out.println(JSON.toJSONString(formattedUninstalls));
 
 	}
 
@@ -376,6 +386,85 @@ public class Util {
 		return comb;
 	}
 
+	static UninstallStructure checkForUninstall(ArrayList<ArrayList<Constraint>> c, ArrayList<String> initial) {
+		ArrayList<ArrayList<Constraint>> removedDupes = new ArrayList<ArrayList<Constraint>>();
+		
+		// Remove dupes from installation formula
+		for(ArrayList<Constraint> solution : c) {
+			ArrayList<Constraint> newList = new ArrayList<>();
+			ArrayList<String> seen = new ArrayList<>();
+			for(Constraint t: solution) {
+				if(!seen.contains(t.toString())) {
+					newList.add(t);
+					seen.add(t.toString());
+				}
+			}
+			removedDupes.add(newList);
+		}
+		
+		// The things we're going to uninstall
+		ArrayList<ArrayList<String>> uninstallForEachSolution = new ArrayList<ArrayList<String>>();
+		
+		for(ArrayList<Constraint> aSolution : removedDupes) {
+			ArrayList<String> uninstallList = new ArrayList<String>();
+			for(Constraint constraint : aSolution) {
+				if(constraint.toString().charAt(0) == '-') {
+					String name = constraint.toString().substring(1);
+					if(initial.contains(name)) {
+						uninstallList.add(name);
+					}
+				}
+			}
+			uninstallForEachSolution.add(uninstallList);
+		}
+		
+		ArrayList<ArrayList<Constraint>> removedUninstall = new ArrayList<ArrayList<Constraint>>();
+		ArrayList<ArrayList<String>> removedUninstallString = new ArrayList<ArrayList<String>>();
+		int i = 0;
+		for(ArrayList<Constraint> s : removedDupes) {
+			ArrayList<Constraint> newSol = new ArrayList<>();
+			ArrayList<String> newSolString = new ArrayList<>();
+			for(Constraint u : s) {
+				String name = u.toString();
+				if(u.toString().charAt(0) == '-' || u.toString().charAt(0) == '+') {
+					name = u.toString().substring(1);
+				}
+				
+				if(uninstallForEachSolution.get(i).contains(name)) {
+					continue;
+				}
+				
+				newSol.add(u);
+				newSolString.add(u.name);
+			}
+			removedUninstall.add(newSol);
+			removedUninstallString.add(newSolString);
+		}
+		
+		return new UninstallStructure(removedUninstall, uninstallForEachSolution, removedUninstallString);
+	}
+	
+	static ArrayList<ArrayList<String>> addUninstalls(UninstallStructure x, ArrayList<ArrayList<String>> nf) {
+		
+		ArrayList<ArrayList<String>> solutionWithUninstalls = new ArrayList<ArrayList<String>>();
+		
+		for(ArrayList<String> sol : nf) {
+			ArrayList<String> uninstallsToAppend = UninstallStructure.lookup(sol);
+			ArrayList<String> uninstallsToAppendFormatted = new ArrayList<String>();
+			for(String s : uninstallsToAppend) {
+				uninstallsToAppendFormatted.add("*"+s);
+			}
+			
+			sol.addAll(uninstallsToAppendFormatted);
+			solutionWithUninstalls.add(sol);
+			
+		}
+		
+		
+		return solutionWithUninstalls;
+		
+	}
+
 	/**
 	 * Calculate formula for SAT solver
 	 * @param formulas ArrayList of solutions
@@ -494,8 +583,13 @@ public class Util {
 					solutionWeight = 0;
 					i++;
 				}
+				if(p.charAt(0) == '*') {
+					solutionWeight += 1000000;
 
-				solutionWeight += repo.getSpecific(p).getSize();
+				} else {
+					solutionWeight += repo.getSpecific(p).getSize();
+				}
+				
 			}
 
 			if(solutionWeight < bestWeight) {
@@ -521,12 +615,12 @@ public class Util {
 
 		for(String p : solution) {
 			if(p.contains("+") || p.contains("-")){
-	    		prunedSol.add(p.substring(1));
-	    		graph.addVertex(p.substring(1));
-	    	} else {
-	    		prunedSol.add(p);
-	    		graph.addVertex(p);
-	    	}
+				prunedSol.add(p.substring(1));
+				graph.addVertex(p.substring(1));
+			} else {
+				prunedSol.add(p);
+				graph.addVertex(p);
+			}
 		}
 
 		for(String p : prunedSol) {
