@@ -142,8 +142,6 @@ public class Util {
 	
 	flattenedSol.addAll(uninstalls);
 	
-	Collections.reverse(flattenedSol);
-	
 	
     System.out.println(JSON.toJSONString(flattenedSol));
 
